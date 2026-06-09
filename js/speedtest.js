@@ -173,8 +173,20 @@
     const deadline = start + UL_DURATION;
     let stop = false;
 
+    // Incompressible payload — an all-zero / patterned buffer gets squashed by
+    // transport compression, making upload speed read absurdly high.
     const payload = new Uint8Array(UL_CHUNK);
-    for (let i = 0; i < UL_CHUNK; i += 4096) payload[i] = (i * 31) & 0xff;
+    if (self.crypto && self.crypto.getRandomValues) {
+      for (let off = 0; off < UL_CHUNK; off += 65536) {
+        payload.set(self.crypto.getRandomValues(new Uint8Array(Math.min(65536, UL_CHUNK - off))), off);
+      }
+    } else {
+      let x = 0x9e3779b9;
+      for (let i = 0; i < UL_CHUNK; i++) {
+        x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0;
+        payload[i] = x & 0xff;
+      }
+    }
 
     const ticker = setInterval(() => {
       const elapsed = (performance.now() - start) / 1000;
@@ -195,6 +207,7 @@
             method: 'POST',
             body: payload,
             cache: 'no-store',
+            headers: { 'Content-Type': 'application/octet-stream' },
           });
           totalBytes += UL_CHUNK;
           if (performance.now() >= deadline) stop = true;
