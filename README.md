@@ -5,23 +5,31 @@
 ## 功能
 
 - **延迟 / 抖动**：多次采样取最优值与抖动
-- **下载测速**：多路并发流式下载，实时仪表盘
-- **上传测速**：多路并发 POST 上传
+- **下载测速**：多路并发拉取静态不可压缩二进制，XHR onprogress 统计真实到达字节
+- **上传测速**：多路并发 POST 随机数据，XHR upload.onprogress 统计真实发出字节
 - **测速历史**：本地保存最近 20 条记录
 - **连接信息**：边缘区域、协议、浏览器识别
 - 深色科技风 UI，响应式，移动端适配
+
+## 测速原理
+
+- 测量的是 **浏览器 ↔ 离你最近的 EdgeOne 边缘节点(POP)** 这一段链路，不回源站。
+- **下载**：循环拉取 `assets/random10mb.bin`（10MB 随机字节，gzip 后反而更大，无法被传输压缩“作弊”加速）。由 EdgeOne 当静态资源直传，真实占用网卡带宽。
+- **上传**：用 `crypto.getRandomValues` 生成不可压缩随机数据 POST 给边缘函数 `/api/upload`。
+- 两端均设 **1.5s 预热**，跳过 TCP 慢启动，只统计稳定窗口的速率。
 
 ## 目录结构
 
 ```
 edgeone-speed-test-beta/
-├── index.html            # 主页面
-├── css/style.css         # 样式
-├── js/speedtest.js       # 测速引擎
-└── functions/api/        # EdgeOne Edge Functions
-    ├── ping.js           # GET  /api/ping     延迟探测
-    ├── download.js       # GET  /api/download 下载数据源
-    └── upload.js         # POST /api/upload   上传接收端
+├── index.html              # 主页面
+├── css/style.css           # 样式
+├── js/speedtest.js         # 测速引擎（XHR）
+├── assets/
+│   └── random10mb.bin      # 10MB 静态随机文件（下载源）
+└── functions/api/          # EdgeOne Edge Functions
+    ├── ping.js             # GET  /api/ping     延迟探测
+    └── upload.js           # POST /api/upload   上传接收端
 ```
 
 ## 部署到 EdgeOne Pages
@@ -32,7 +40,7 @@ edgeone-speed-test-beta/
    - **框架预设**：无 / Static
    - **构建命令**：留空
    - **输出目录**：`/`（根目录）
-4. 部署完成后，`functions/api/*` 会自动映射为 `/api/*` 边缘函数
+4. 部署完成后，`functions/api/*` 会自动映射为 `/api/*` 边缘函数，`assets/*` 作为静态资源直传
 
 无需任何构建步骤，开箱即用。
 
