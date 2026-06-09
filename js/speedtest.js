@@ -23,6 +23,22 @@
     ping: $('cardPing'), jitter: $('cardJitter'),
     download: $('cardDownload'), upload: $('cardUpload'),
   };
+  const nodeSelect = $('nodeSelect');
+  const nodeHint = $('nodeHint');
+
+  // ---- Targets (节点) ----
+  const TARGETS = (window.SPEEDTEST_TARGETS && window.SPEEDTEST_TARGETS.length)
+    ? window.SPEEDTEST_TARGETS
+    : [{ id: 'auto', label: '自动 · 就近节点', region: 'EdgeOne Anycast',
+         download: 'assets/random10mb.bin', upload: '/api/upload', ping: '/api/ping' }];
+  let currentTarget = TARGETS[0];
+
+  function ep(kind) {
+    // resolve endpoint url for current target with cache-buster
+    const base = currentTarget[kind];
+    const sep = base.indexOf('?') >= 0 ? '&' : '?';
+    return `${base}${sep}r=${Math.random()}`;
+  }
 
   // ---- Config ----
   const DIAL_CIRCUM = 879;
@@ -30,8 +46,6 @@
   const SPEED_MAX = 1000;
   const PING_COUNT = 10;
 
-  const DL_FILE = 'assets/random10mb.bin'; // static incompressible asset
-  const DL_FILE_BYTES = 10 * 1024 * 1024;
   const DL_STREAMS = 6;
   const DL_DURATION = 10000;
   const DL_WARMUP = 1500;       // ignore first 1.5s (TCP ramp-up)
@@ -88,7 +102,7 @@
     return new Promise((resolve) => {
       const t0 = performance.now();
       const xhr = new XMLHttpRequest();
-      xhr.open('GET', `/api/ping?t=${Date.now()}_${i}`, true);
+      xhr.open('GET', `${currentTarget.ping}${currentTarget.ping.indexOf('?')>=0?'&':'?'}t=${Date.now()}_${i}`, true);
       xhr.onreadystatechange = () => {
         if (xhr.readyState === 4) resolve(performance.now() - t0);
       };
@@ -178,7 +192,7 @@
       function spawn() {
         if (finished || performance.now() >= deadline) return;
         const xhr = new XMLHttpRequest();
-        xhr.open('GET', `${DL_FILE}?r=${Math.random()}`, true);
+        xhr.open('GET', ep('download'), true);
         xhr.responseType = 'arraybuffer';
         let last = 0;
         xhr.onprogress = (e) => {
@@ -253,7 +267,7 @@
       function spawn() {
         if (finished || performance.now() >= deadline) return;
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `/api/upload?r=${Math.random()}`, true);
+        xhr.open('POST', ep('upload'), true);
         xhr.setRequestHeader('Content-Type', 'application/octet-stream');
         let last = 0;
         xhr.upload.onprogress = (e) => {
@@ -340,16 +354,45 @@
     else if (/Safari\//.test(ua)) b = 'Safari';
     $('infoBrowser').textContent = b;
     $('infoProto').textContent = location.protocol === 'https:' ? 'HTTPS' : 'HTTP';
-    fetch('/api/ping?info=1', { cache: 'no-store' })
+    refreshRegion();
+  }
+  function refreshRegion() {
+    const url = currentTarget.ping + (currentTarget.ping.indexOf('?') >= 0 ? '&' : '?') + 'info=1';
+    $('infoRegion').textContent = '检测中…';
+    fetch(url, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((d) => { $('infoRegion').textContent = (d && d.region) ? d.region : '全球边缘'; })
-      .catch(() => { $('infoRegion').textContent = '全球边缘'; });
+      .then((d) => { $('infoRegion').textContent = (d && d.region) ? d.region : (currentTarget.region || '全球边缘'); })
+      .catch(() => { $('infoRegion').textContent = currentTarget.region || '全球边缘'; });
+  }
+
+  // ---- Node picker ----
+  function initNodePicker() {
+    if (!nodeSelect) return;
+    nodeSelect.innerHTML = TARGETS.map((t, i) =>
+      `<option value="${i}">${t.label}</option>`).join('');
+    nodeSelect.value = '0';
+    updateNodeHint();
+    nodeSelect.addEventListener('change', () => {
+      if (running) { nodeSelect.value = String(TARGETS.indexOf(currentTarget)); return; }
+      currentTarget = TARGETS[parseInt(nodeSelect.value, 10)] || TARGETS[0];
+      updateNodeHint();
+      refreshRegion();
+    });
+  }
+  function updateNodeHint() {
+    if (!nodeHint) return;
+    if (currentTarget.id === 'auto') {
+      nodeHint.textContent = 'EdgeOne 自动路由到离你最近的边缘节点';
+    } else {
+      nodeHint.textContent = `定向测速：${currentTarget.region || currentTarget.label}（需该地区已绑定独立域名）`;
+    }
   }
 
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
   function pad(n) { return String(n).padStart(2, '0'); }
 
   buildTicks();
+  initNodePicker();
   renderHistory();
   detectInfo();
   setDial(0);

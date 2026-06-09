@@ -25,6 +25,16 @@
         </header>
 
         <main class="main">
+            <!-- 测速节点选择 -->
+            <section class="node-picker">
+                <label class="node-picker-label" for="nodeSelect">测速节点</label>
+                <div class="node-select-wrap">
+                    <select id="nodeSelect" class="node-select"></select>
+                    <svg class="node-select-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+                </div>
+                <span class="node-hint" id="nodeHint"></span>
+            </section>
+
             <!-- 中央仪表盘 -->
             <section class="speedometer-wrap">
                 <div class="speedometer">
@@ -125,6 +135,7 @@
         </footer>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/speedtest.js"></script>
 </body>
 </html>
