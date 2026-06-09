@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e1a">
+    <title>EdgeOne Speed Test · 网络测速</title>
+    <meta name="description" content="基于腾讯云 EdgeOne 边缘节点的网络测速工具，测量下载、上传速度、延迟与抖动。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
+    <div class="container">
+        <header class="site-header">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                <span class="logo-text">EdgeOne <strong>Speed Test</strong></span>
+            </div>
+            <span class="badge">BETA</span>
+        </header>
+
+        <main class="main">
+            <!-- 中央仪表盘 -->
+            <section class="speedometer-wrap">
+                <div class="speedometer">
+                    <svg class="dial" viewBox="0 0 320 320">
+                        <!-- 刻度轨道 -->
+                        <circle class="dial-track" cx="160" cy="160" r="140"></circle>
+                        <circle class="dial-progress" id="dialProgress" cx="160" cy="160" r="140"></circle>
+                    </svg>
+                    <div class="dial-center">
+                        <div class="dial-phase" id="dialPhase">就绪</div>
+                        <div class="dial-value" id="dialValue">0.00</div>
+                        <div class="dial-unit" id="dialUnit">Mbps</div>
+                    </div>
+                    <!-- 刻度数字 -->
+                    <div class="dial-ticks" id="dialTicks"></div>
+                </div>
+            </section>
+
+            <!-- 结果四宫格 -->
+            <section class="results-grid">
+                <div class="result-card" id="cardPing">
+                    <div class="result-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                    </div>
+                    <div class="result-label">延迟</div>
+                    <div class="result-value"><span id="valPing">--</span><i>ms</i></div>
+                </div>
+                <div class="result-card" id="cardJitter">
+                    <div class="result-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2-8 4 16 2-8h4"></path></svg>
+                    </div>
+                    <div class="result-label">抖动</div>
+                    <div class="result-value"><span id="valJitter">--</span><i>ms</i></div>
+                </div>
+                <div class="result-card" id="cardDownload">
+                    <div class="result-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v14M5 12l7 7 7-7M5 21h14"></path></svg>
+                    </div>
+                    <div class="result-label">下载</div>
+                    <div class="result-value"><span id="valDownload">--</span><i>Mbps</i></div>
+                </div>
+                <div class="result-card" id="cardUpload">
+                    <div class="result-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V7M5 12l7-7 7 7M5 3h14"></path></svg>
+                    </div>
+                    <div class="result-label">上传</div>
+                    <div class="result-value"><span id="valUpload">--</span><i>Mbps</i></div>
+                </div>
+            </section>
+
+            <!-- 开始按钮 -->
+            <button class="start-btn" id="startBtn">
+                <span class="btn-label">GO</span>
+                <span class="btn-ring"></span>
+            </button>
+
+            <div class="status-text" id="statusText">点击 GO 开始测速</div>
+        </main>
+
+        <!-- 连接信息 -->
+        <section class="info-bar">
+            <div class="info-item">
+                <span class="info-key">服务节点</span>
+                <span class="info-val" id="infoServer">EdgeOne Pages</span>
+            </div>
+            <div class="info-item">
+                <span class="info-key">区域</span>
+                <span class="info-val" id="infoRegion">检测中…</span>
+            </div>
+            <div class="info-item">
+                <span class="info-key">IP 协议</span>
+                <span class="info-val" id="infoProto">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-key">浏览器</span>
+                <span class="info-val" id="infoBrowser">--</span>
+            </div>
+        </section>
+
+        <!-- 历史记录 -->
+        <section class="history" id="historySection" hidden>
+            <div class="history-head">
+                <h2>测速历史</h2>
+                <button class="clear-btn" id="clearHistory">清空</button>
+            </div>
+            <div class="history-table-wrap">
+                <table class="history-table">
+                    <thead>
+                        <tr><th>时间</th><th>下载</th><th>上传</th><th>延迟</th><th>抖动</th></tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer class="site-footer">
+            <p>EdgeOne Speed Test <span class="dot">·</span> 数据基于浏览器实测，仅供参考 <span class="dot">·</span> Powered by Tencent EdgeOne Pages</p>
+        </footer>
+    </div>
+
+    <script src="js/speedtest.js"></script>
+</body>
+</html>

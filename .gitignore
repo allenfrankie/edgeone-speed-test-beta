@@ -1,0 +1,12 @@
+# Build artifacts
+node_modules/
+dist/
+.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Temp response files
+gh_repo_response.json
